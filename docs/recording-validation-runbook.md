@@ -1,36 +1,64 @@
 # Recording Validation Runbook
 
-This is a 1:1 rehearsal of the recording flow.
+This runbook is a 1:1 rehearsal of the recording flow.
 
-The rule is simple:
+The setup is:
 
-- run this before recording
-- do not improvise outside this sequence
-- if a step fails, stop and fix it before moving on
+- Claude Code is the protagonist
+- the official `creem.io/SKILL.md` is loaded in Claude Code
+- you speak in natural language
+- Claude Code executes the Creem CLI and explains the JSON
+- the local app exists to receive the success redirect, webhooks, and expose local state
 
 ## Goal
 
-Validate the exact sequence you will later show on camera:
+Validate the exact flow you want to show on camera:
 
-`app state -> checkout -> success -> webhook -> CLI verification -> AI reasoning -> operator workflow`
+`Claude Code request -> Creem CLI command -> checkout URL -> local app state -> CLI verification -> Claude explanation`
+
+## Step 0 — Confirm Claude Code + skill works
+
+Before anything else, verify the core bet of the demo.
+
+In Claude Code, ask:
+
+```text
+Use the Creem CLI to verify my auth and tell me what environment I am in.
+```
+
+Expected behavior:
+
+- Claude Code runs `creem whoami --json`
+- Claude Code explains that auth is working
+- Claude Code tells you the environment is `test`
+
+Then ask:
+
+```text
+List my Creem products and tell me which one I should use for a demo checkout.
+```
+
+Expected behavior:
+
+- Claude Code runs `creem products list --json`
+- Claude Code identifies the product id
+
+If this step is weak or clumsy, stop. The new demo depends on this working cleanly.
 
 ## Preflight
 
 ### 1. Confirm environment
 
-Run:
+Run locally:
 
 ```bash
 creem --version
-creem whoami --json
 pnpm typecheck
 ```
 
 Expected:
 
 - CLI responds
-- auth is `true`
-- environment is `test`
 - typecheck passes
 
 ### 2. Confirm env files
@@ -47,7 +75,7 @@ Must exist:
 - `CREEM_WEBHOOK_SECRET`
 - `APP_URL=http://localhost:3000`
 
-### 3. Start the app
+### 3. Start the local app
 
 Run:
 
@@ -55,7 +83,7 @@ Run:
 pnpm dev:integration
 ```
 
-Then open:
+Open:
 
 - `http://localhost:3000/`
 - `http://localhost:3000/api/debug/state`
@@ -67,208 +95,259 @@ Expected:
 
 ### 4. Start the tunnel
 
-Run your preferred tunnel, for example:
+Run:
 
 ```bash
 ngrok http --url=chigger-crisp-tightly.ngrok-free.app 3000
 ```
 
-Expected:
-
-- you get a stable public HTTPS URL
-
 Important:
 
 - the tunnel must point to port `3000`
-- do not point it to port `80`
-- the local Bun + Hono app listens on `http://localhost:3000`
+- not port `80`
 
 ### 5. Confirm webhook registration
 
 In Creem, confirm the webhook URL is:
 
 ```text
-https://<public-url>/api/webhooks/creem
+https://chigger-crisp-tightly.ngrok-free.app/api/webhooks/creem
 ```
 
 Expected:
 
 - correct URL
-- correct secret copied to local `.env`
+- correct secret copied into local `.env`
 
 ## Validation Pass
 
-This mirrors the recording.
+This is the rehearsal you run before recording.
 
 ### Phase 1 — Baseline state
 
-Run:
+Show yourself the app state first:
 
 ```bash
 curl -sS http://localhost:3000/api/debug/state
 ```
 
-Look for:
+You only care about visible signals:
 
-- app config present
-- `lastWebhook` visible or null
-- current local state understandable
+- app config is present
+- `lastWebhook` is null or old
+- current local state is understandable
 
-This is the first thing you will also show in the video.
+This is also how the video should start.
 
-### Phase 2 — Checkout workflow
+### Phase 2 — Workflow 1: checkout + verify
 
-Run:
+This workflow now lives primarily inside Claude Code.
 
-```bash
-pnpm workflow:checkout
+#### 2.1 Ask Claude Code to create the checkout
+
+Prompt:
+
+```text
+Create a Creem test checkout for my demo product and use http://localhost:3000/success as the success URL. Then show me the checkout URL.
 ```
 
-What happens:
+Expected Claude Code behavior:
 
-1. the script hits `POST /api/checkout`
-2. it saves the checkout response
-3. it prints the checkout URL
-4. it waits for you to complete the purchase
+- runs `creem checkouts create --product <id> --success-url http://localhost:3000/success --json`
+- explains what was created
+- gives you the checkout URL
 
-What you must do now:
+#### 2.2 Complete the purchase
+
+What you do:
 
 1. open the checkout URL
 2. complete the sandbox purchase
 3. confirm the browser lands on `/success`
-4. go back to terminal and continue
 
-Expected results:
+#### 2.3 Ask Claude Code to verify it
 
-- `checkout-response.json` exists
-- `transactions-list.json` exists
-- `subscriptions-list.json` exists
-- `local-debug-state.json` exists
+Prompt:
 
-Then inspect:
+```text
+I completed the purchase. Verify it went through and tell me the transaction details.
+```
+
+Expected Claude Code behavior:
+
+- runs `creem transactions list --json`
+- identifies the likely new transaction
+- explains status, amount, and relevant ids
+
+Then ask:
+
+```text
+Does the subscription look healthy?
+```
+
+Expected Claude Code behavior:
+
+- runs `creem subscriptions list --json` or `creem subscriptions get <id> --json`
+- explains state and next billing info
+
+#### 2.4 Confirm the local app saw it
+
+Now check the app:
 
 ```bash
 curl -sS http://localhost:3000/api/debug/state
 ```
 
-Must be true:
+What must now be true:
 
-- `lastCheckout` is updated
 - `lastSuccess` is updated
-- `lastWebhook` is present after the real webhook lands
-- `localAccessStatus` is no longer just the pre-checkout state
+- `lastWebhook` is present
+- `localAccessStatus` reflects the post-checkout state
 
-If `lastWebhook` is still null:
+If `lastWebhook` is still missing:
 
 - stop
-- check tunnel
-- check secret
-- check webhook registration
+- fix tunnel / secret / webhook registration
 
 Do not proceed to recording until this is fixed.
 
-### Phase 3 — Propagation debug workflow
+### Phase 3 — Workflow 2: propagation debug
 
-Run:
+This workflow is a conversation, not a script.
 
-```bash
-pnpm workflow:debug
+Prompt:
+
+```text
+My app thinks the user has access, but I want to make sure Creem agrees. Compare my local app state with what Creem says.
 ```
 
-Then inspect the generated artifact folder in `artifacts/`.
+Expected Claude Code behavior:
 
-Expected:
+- runs `curl http://localhost:3000/api/debug/state`
+- runs `creem transactions list --json`
+- runs `creem subscriptions list --json`
+- explains whether local state and Creem state match
 
-- local debug state saved
-- transactions list saved
-- subscriptions list saved
+Optional stronger variant:
 
-This is the exact material you will later give to Claude Code.
+- turn off the tunnel before a test purchase
+- then ask Claude Code the same question
+- ideal diagnosis:
+  - payment happened
+  - your app never received the webhook
+  - problem is propagation, not checkout
 
-### Phase 4 — AI reasoning pass
+If you use the mismatch version, rehearse it before recording. Do not attempt it cold on camera.
 
-Open Claude Code in the repo and use:
+### Phase 4 — Workflow 3: management
 
-- [wf1-checkout-verify.txt](/Users/santi/Code/creem-cli-developer-toolkit/scripts/prompts/wf1-checkout-verify.txt)
-- [wf2-debug-propagation.txt](/Users/santi/Code/creem-cli-developer-toolkit/scripts/prompts/wf2-debug-propagation.txt)
+This workflow should also be conversational.
 
-Expected:
+Prompt:
 
-- Claude identifies the likely transaction
-- Claude identifies the likely subscription
-- Claude gives a sensible next command
+```text
+I want to add a Pro Plan to my store. Create a recurring product at $19/month.
+```
 
-If Claude is vague:
+Expected Claude Code behavior:
 
-- point it to the exact artifact paths
-- shorten the prompt
-- note the exact wording that works best
+- runs `creem products create ... --json`
+- confirms the product details
 
-That wording is what you should reuse on camera.
+Then ask:
 
-### Phase 5 — Operator workflow
-
-Pick a safe test subscription id first.
-
-Run:
-
-```bash
-pnpm workflow:manage -- sub_xxx
+```text
+Now list all products to verify it.
 ```
 
 Expected:
 
-- product creation succeeds
-- product list shows the new product
-- pause succeeds
-- resume succeeds
+- Claude Code runs `creem products list --json`
+- confirms the new product is visible
 
-If you do not have a safe subscription id, do not improvise in the recording. Pick one now and write it down.
+Then ask:
+
+```text
+I need to pause subscription sub_xxx while I debug something.
+```
+
+Expected:
+
+- Claude Code runs pause
+- explains the result
+
+Then:
+
+```text
+Resume it and confirm the state after the change.
+```
+
+Expected:
+
+- Claude Code runs resume
+- explains the result
+
+Choose the `sub_xxx` before recording. Do not improvise the target subscription.
 
 ## Recording readiness checklist
 
 You are ready to record only if all of these are true:
 
-1. one real checkout completed
-2. one real webhook landed locally
-3. `/api/debug/state` shows the webhook
-4. `workflow:checkout` completed cleanly
-5. `workflow:debug` completed cleanly
-6. `workflow:manage -- sub_xxx` completed cleanly
-7. Claude Code prompts already worked once
-8. you know which artifact folders you want to reference
+1. Claude Code successfully used the Creem CLI at least once
+2. Claude Code successfully created a checkout URL
+3. one real checkout completed
+4. one real webhook landed locally
+5. `/api/debug/state` shows the webhook
+6. Claude Code successfully compared app state vs Creem state
+7. Claude Code successfully created a product
+8. Claude Code successfully paused and resumed a safe test subscription
 
 ## What to write down before recording
 
 Keep these in a note:
 
-- product id for checkout
-- subscription id for pause/resume
-- last clean `wf1` folder
-- last clean `wf2` folder
-- last clean `wf3` folder
-- exact Claude Code prompts that worked best
+- product id used for checkout
+- subscription id used for pause/resume
+- exact Claude prompts that worked best
 - tunnel URL
+- one clean transaction id from a rehearsal
+- one clean subscription id from a rehearsal
+
+## Repo support material
+
+These are useful, but not the protagonists of the video:
+
+- `scripts/`
+- `scripts/prompts/`
+- `artifacts/`
+
+They exist as:
+
+- fallback tools
+- reproducibility support
+- blog/repo documentation
+
+They should not dominate the recording.
 
 ## Recording pass mapping
 
 Use this mapping:
 
-- Validation Phase 1 -> Video intro baseline state
-- Validation Phase 2 -> Video Workflow 1
-- Validation Phase 3 -> Video Workflow 2
-- Validation Phase 4 -> Video AI reasoning moments
-- Validation Phase 5 -> Video Workflow 3
+- Step 0 -> video setup credibility
+- Phase 1 -> opening baseline
+- Phase 2 -> video Workflow 1
+- Phase 3 -> video Workflow 2
+- Phase 4 -> video Workflow 3
 
-The recording should be almost the same sequence, just with narration and fewer pauses.
+The recording should feel like a clean replay of this runbook, with narration added.
 
 ## Abort conditions
 
 Do not start recording if any of these happens:
 
-- webhook does not reach local app
-- checkout succeeds but artifacts are incomplete
-- Claude Code answer is weak or confused
-- pause/resume target is not confirmed safe
+- Claude Code fails to use the CLI reliably
+- Claude Code creates weak or confused explanations of the JSON
+- webhook does not reach the local app
+- the target subscription for pause/resume is not confirmed safe
 
 Fix the issue first, then rerun this runbook.

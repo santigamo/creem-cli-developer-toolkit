@@ -4,14 +4,14 @@ This repo is the minimal integration project for the `CREEM CLI as a Developer P
 
 It gives you a small, reproducible loop:
 
-`local app -> checkout -> webhook -> local debug state -> Creem CLI verification -> AI reasoning over --json`
+`Claude Code prompt -> Creem CLI -> checkout URL -> local app webhook/state -> AI explanation over --json`
 
 ## What is included
 
 - `examples/minimal-integration`: Bun + TypeScript + Hono app
-- `scripts/verify-checkout.sh`: creates a checkout through the app and captures CLI evidence
-- `scripts/debug-propagation.sh`: captures local state plus Creem transactions/subscriptions
-- `scripts/manage-products.sh`: creates a product and optionally pauses/resumes a subscription
+- `scripts/verify-checkout.sh`: support script for capturing checkout verification evidence
+- `scripts/debug-propagation.sh`: support script for capturing local state plus Creem transactions/subscriptions
+- `scripts/manage-products.sh`: support script for product creation and optional pause/resume
 - `scripts/prompts/`: prompts ready to paste into Claude Code during the recording
 - `skill/SKILL.md`: a small Creem operator skill for AI coding tools
 - `docs/recording-validation-runbook.md`: rehearsal checklist that mirrors the recording flow
@@ -101,61 +101,64 @@ Before recording, make sure you have validated one real webhook delivery end to 
 ## Local routes
 
 - `GET /`: minimal status page
-- `POST /api/checkout`: creates a Creem checkout session
+- `POST /api/checkout`: optional fallback route for creating a checkout session
 - `GET /success`: stores the success URL query params in local state
 - `POST /api/webhooks/creem`: receives and validates Creem webhooks
 - `GET /api/debug/state`: returns local app state plus recent webhook events
 
+## Primary demo approach
+
+The intended demo is:
+
+1. you talk to Claude Code in natural language
+2. Claude Code uses the Creem CLI
+3. Claude Code parses `--json`
+4. the local app provides `/success`, `/api/webhooks/creem`, and `/api/debug/state`
+
+The scripts in this repo are support material for reproducibility. They are not meant to be the stars of the video.
+
 ## Workflow 1: checkout and verify
 
-Start the app, then run:
+Primary demo flow:
 
-```bash
-pnpm workflow:checkout
-```
-
-This script:
-
-- calls `POST /api/checkout`
-- stores the response under `artifacts/`
-- pauses so you can complete the checkout
-- captures:
-  - local debug state
-  - `creem products list --json`
+- ask Claude Code to create a checkout with:
+  - `creem checkouts create --product <id> --success-url http://localhost:3000/success --json`
+- open the returned checkout URL
+- complete the purchase
+- ask Claude Code to verify the purchase with:
   - `creem transactions list --json`
   - `creem subscriptions list --json`
 
-Use `scripts/prompts/wf1-checkout-verify.txt` in Claude Code.
+Support path:
+
+- `pnpm workflow:checkout`
 
 ## Workflow 2: debug state propagation
 
-```bash
-pnpm workflow:debug
-```
+Primary demo flow:
 
-This captures:
+- ask Claude Code to compare:
+  - `curl http://localhost:3000/api/debug/state`
+  - `creem transactions list --json`
+  - `creem subscriptions list --json`
+- let Claude Code explain whether app state and Creem state match
 
-- local debug state
-- `creem transactions list --json`
-- `creem subscriptions list --json`
+Support path:
 
-Use `scripts/prompts/wf2-debug-propagation.txt` in Claude Code.
+- `pnpm workflow:debug`
 
 ## Workflow 3: manage products from terminal
 
-Without a subscription id:
+Primary demo flow:
 
-```bash
-pnpm workflow:manage
-```
+- ask Claude Code to create a recurring product
+- ask Claude Code to list products
+- ask Claude Code to pause a safe test subscription
+- ask Claude Code to resume it
 
-With a test subscription id to pause and resume:
+Support path:
 
-```bash
-pnpm workflow:manage -- sub_xxx
-```
-
-Use `scripts/prompts/wf3-manage-terminal.txt` in Claude Code.
+- `pnpm workflow:manage -- sub_xxx`
 
 ## What has been validated locally
 
@@ -182,14 +185,14 @@ These parts are wired but cannot be fully validated without your Creem test acco
 
 Before recording:
 
-1. Confirm `creem whoami --json`
+1. Confirm Claude Code can use the Creem CLI via the official skill
 2. Confirm the product id in `.env`
 3. Start the Bun app
 4. Start the tunnel
-5. Confirm one test webhook hit `/api/webhooks/creem`
-6. Pre-run each script once so you know the exact outputs
-7. Keep the `artifacts/` folders from a clean run
-8. Keep the prompt files open in Claude Code
+5. Confirm one real webhook hit `/api/webhooks/creem`
+6. Rehearse the conversational prompts in Claude Code once
+7. Pick a safe subscription id for pause/resume
+8. Keep scripts and prompts as fallback/reference, not as the main act
 
 ## Quality checks
 
@@ -201,10 +204,11 @@ pnpm typecheck
 
 ## Suggested demo loop
 
-1. Show `GET /api/debug/state`
-2. Run `pnpm workflow:checkout`
-3. Complete a sandbox purchase
-4. Ask Claude Code to compare local state with `creem ... --json`
-5. Run `pnpm workflow:debug`
-6. Run `pnpm workflow:manage`
-7. Show `skill/SKILL.md`
+1. Show the local app briefly
+2. Show Claude Code with the official Creem skill loaded
+3. Ask Claude Code to create a checkout
+4. Complete the sandbox purchase
+5. Ask Claude Code to verify the transaction and subscription
+6. Ask Claude Code to compare app state with Creem state
+7. Ask Claude Code to create a product and pause/resume a subscription
+8. Show the repo support material briefly

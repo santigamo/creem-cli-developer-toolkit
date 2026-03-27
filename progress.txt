@@ -73,3 +73,14 @@
 - **Learnings for future iterations:**
   - The tunnel target should be documented explicitly; the public ngrok URL is stable, but it still needs to forward to the app port rather than default HTTP port 80.
 ---
+## [2026-03-27 16:12] - BOUNTY-DEMO-REWRITE
+- Rewrote the recording runbook, README guidance, and external bounty plan around Claude Code plus the official Creem skill as the primary demo interface.
+- Switched Workflow 1 to create the checkout from the CLI instead of the local app route, leaving the app responsible for success handling, webhooks, and debug state.
+- Reframed scripts and artifacts as repo support material rather than the main on-camera workflow.
+- Files changed:
+  - `README.md`
+  - `docs/recording-validation-runbook.md`
+- **Learnings for future iterations:**
+  - The strongest demo angle is not “I can run the CLI”, but “my AI coding assistant can operate Creem for me and explain what happened”.
+  - The local app is more compelling as an observable system under test than as the primary place where checkout creation happens.
+---
