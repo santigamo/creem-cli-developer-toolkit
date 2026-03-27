@@ -2,6 +2,7 @@
 - Keep the integration tiny: Bun runtime, Hono routes, and JSON file persistence instead of a database.
 - Root workflow scripts load both `/.env` and `examples/minimal-integration/.env`; any env value with spaces must be quoted because the scripts use shell `source`.
 - Capture reproducible evidence under `artifacts/` before recording; the AI prompts are designed to reason over those saved JSON files, not live terminal scrollback.
+- Use the official `creem` SDK for API calls and keep webhook verification separate with manual HMAC over the raw body; the webhook route does not need the API key.
 
 ## [2026-03-27 15:51] - BOUNTY-MINIMAL-INTEGRATION
 - Implemented a runnable Bun + TypeScript + Hono minimal integration with checkout creation, success capture, webhook ingestion, and local debug state.
@@ -32,4 +33,24 @@
   - In CLI `v0.1.3`, `creem products create` requires `--description`; the initial script assumption was wrong.
   - `creem_io` types do not expose `webhookId` or `webhookEventType` on `onGrantAccess` / `onRevokeAccess`, so the app must synthesize a local event label for those callbacks.
   - Recording prep is materially safer once each workflow script has been run at least once and its artifacts folder is known in advance.
+---
+## [2026-03-27 16:00] - BOUNTY-SDK-MIGRATION
+- Migrated the minimal integration from deprecated `creem_io` to the official `creem` SDK.
+- Replaced wrapper-based webhook callbacks with manual HMAC SHA-256 signature verification plus raw event parsing in the Hono webhook route.
+- Revalidated:
+  - `pnpm typecheck`
+  - real checkout creation via `POST /api/checkout`
+  - signed local webhook delivery into `/api/webhooks/creem`
+  - `GET /api/debug/state` after webhook processing
+- Files changed:
+  - `README.md`
+  - `progress.txt`
+  - `examples/minimal-integration/package.json`
+  - `examples/minimal-integration/src/creem.ts`
+  - `examples/minimal-integration/src/routes/webhooks.ts`
+  - `pnpm-lock.yaml`
+- **Learnings for future iterations:**
+  - The official `creem` SDK uses `new Creem({ apiKey, serverIdx })`; test mode should target `serverIdx: 1`.
+  - The official SDK does not provide the same webhook helper surface as `creem_io`, so webhook verification must happen in app code.
+  - Creem webhook payload shape is inconsistent across docs; supporting both `eventType/object` and `type/data` makes the route more robust.
 ---

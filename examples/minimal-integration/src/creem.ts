@@ -1,8 +1,8 @@
-import { createCreem } from "creem_io";
+import { Creem } from "creem";
 
 import type { Result, RuntimeConfig } from "./types";
 
-export type CreemClient = ReturnType<typeof createCreem>;
+export type CreemClient = Creem;
 
 function readBoolean(rawValue: string | undefined, defaultValue: boolean): boolean {
   if (rawValue === undefined) {
@@ -66,10 +66,6 @@ export function getWebhookReadiness(
 ): Result<RuntimeConfig, { message: string; missing: string[] }> {
   const missing = [];
 
-  if (!config.apiKey) {
-    missing.push("CREEM_API_KEY");
-  }
-
   if (!config.webhookSecret) {
     missing.push("CREEM_WEBHOOK_SECRET");
   }
@@ -92,10 +88,9 @@ export function createCreemClient(config: RuntimeConfig): CreemClient {
     throw new Error("CREEM_API_KEY is required to create the Creem client.");
   }
 
-  return createCreem({
+  return new Creem({
     apiKey: config.apiKey,
-    webhookSecret: config.webhookSecret ?? undefined,
-    testMode: config.testMode,
+    serverIdx: config.testMode ? 1 : 0,
   });
 }
 

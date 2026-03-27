@@ -19,15 +19,15 @@ It gives you a small, reproducible loop:
 
 - Runtime: `Bun`
 - Server: `Hono`
-- SDK: `creem_io`
+- SDK: `creem`
 - Package manager: `pnpm`
 - Local persistence: JSON files in `examples/minimal-integration/data/`
 
-## Important note on the SDK
+## SDK and webhook strategy
 
-`creem_io@1.1.0` is currently marked as deprecated on npm in favor of the `creem` package. This repo still uses `creem_io` because the official Creem docs currently document its webhook helpers and Hono example directly, which keeps the integration smaller for the bounty.
+This repo uses the official `creem` package for API calls.
 
-If Creem updates the docs or examples before publication, the safest upgrade path is to move the integration to `creem` and verify webhook signatures manually.
+The SDK currently focuses on API resources such as products, checkouts, subscriptions, and transactions. For webhooks, this repo verifies the raw request body manually with HMAC SHA-256 against the `creem-signature` header, then records the parsed event into local JSON state.
 
 ## Prerequisites
 
@@ -164,7 +164,8 @@ These parts have already been smoke-tested in this repo:
 - `GET /` renders
 - `GET /api/debug/state` returns JSON
 - `GET /success` stores query params in local state
-- `POST /api/checkout` returns a clear configuration error when env vars are missing
+- `POST /api/checkout` creates a real test checkout with the official `creem` SDK
+- `POST /api/webhooks/creem` accepts a correctly signed local test payload and updates local state
 - TypeScript typecheck passes
 
 ## What still requires your real Creem credentials

@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "creem_io": "^1.1.0",
+    "creem": "^1.4.4",
     "hono": "^4.12.9"
   },
   "devDependencies": {
@@ -17,4 +17,3 @@
     "typescript": "^5.9.2"
   }
 }
-
