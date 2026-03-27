@@ -3,6 +3,22 @@
 - Root workflow scripts load both `/.env` and `examples/minimal-integration/.env`; any env value with spaces must be quoted because the scripts use shell `source`.
 - Capture reproducible evidence under `artifacts/` before recording; the AI prompts are designed to reason over those saved JSON files, not live terminal scrollback.
 - Use the official `creem` SDK for API calls and keep webhook verification separate with manual HMAC over the raw body; the webhook route does not need the API key.
+- Distributable Claude Code skills must live under `skills/<skill-name>/SKILL.md` with valid frontmatter; `npx skills add . --list` is the quickest local validation.
+
+## [2026-03-27 18:12] - BOUNTY-CREEM-CLI-SKILL
+- Replaced the internal Creem operator note with a distributable Claude Code skill under `skills/creem-cli/`, including `SKILL.md` and `agents/openai.yaml`.
+- Expanded the skill into a universal Creem CLI guide with real `v0.1.3` commands for products, customers, checkouts, subscriptions, transactions, config, and automation-safe rules.
+- Updated README to point at the new skill path and document local/GitHub installation via the `skills` CLI.
+- Files changed:
+  - `README.md`
+  - `progress.txt`
+  - `skills/creem-cli/SKILL.md`
+  - `skills/creem-cli/agents/openai.yaml`
+- **Learnings for future iterations:**
+  - The `skills` CLI does not discover ad hoc root-level `skill/SKILL.md`; the repo must expose `skills/<name>/SKILL.md` with frontmatter.
+  - `agents/openai.yaml` only needs lightweight UI metadata, but `default_prompt` should explicitly mention the skill as `$creem-cli`.
+  - For agent-safe Creem usage, the most important constraints are avoiding `~/.creem/config.json`, preferring `--json`, and not running login commands with inline API keys.
+---
 
 ## [2026-03-27 15:51] - BOUNTY-MINIMAL-INTEGRATION
 - Implemented a runnable Bun + TypeScript + Hono minimal integration with checkout creation, success capture, webhook ingestion, and local debug state.
@@ -83,4 +99,15 @@
 - **Learnings for future iterations:**
   - The strongest demo angle is not “I can run the CLI”, but “my AI coding assistant can operate Creem for me and explain what happened”.
   - The local app is more compelling as an observable system under test than as the primary place where checkout creation happens.
+---
+## [2026-03-27 18:37] - BOUNTY-RUNBOOK-NARRATIVE
+- Rewrote the rehearsal narrative in `docs/recording-validation-runbook.md` so Act 1 is a clean happy-path verification, Act 2 is an incident investigation, and Act 3 is store operation.
+- Changed Act 2 to start from a user-reported mismatch and evidence gathering instead of feeling like a second copy of the checkout flow.
+- Clarified that Act 2 ends with diagnosis and recovery options, not a fake live fix that would leave local state unresolved.
+- Files changed:
+  - `docs/recording-validation-runbook.md`
+  - `progress.txt`
+- **Learnings for future iterations:**
+  - Demo acts need to differ by question and role, not just by outcome; otherwise a failure case feels like a repeated happy path.
+  - For payment demos, diagnose-only is often more honest than pretending an infra issue was fixed if the missed webhook was never replayed.
 ---
