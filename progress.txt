@@ -54,3 +54,14 @@
   - The official SDK does not provide the same webhook helper surface as `creem_io`, so webhook verification must happen in app code.
   - Creem webhook payload shape is inconsistent across docs; supporting both `eventType/object` and `type/data` makes the route more robust.
 ---
+## [2026-03-27 16:05] - BOUNTY-RECORDING-PREP
+- Updated the external bounty plan to reflect the final implementation choices and current validation status.
+- Added a recording validation runbook that mirrors the eventual video sequence step by step.
+- Updated README to surface the rehearsal doc as part of the repo deliverable.
+- Files changed:
+  - `README.md`
+  - `docs/recording-validation-runbook.md`
+- **Learnings for future iterations:**
+  - Recording prep should be treated as a first-class artifact; the best demo flows are the ones already rehearsed against real outputs.
+  - The validation pass should be nearly identical to the recording pass so the video is an execution of a known-good path, not a live exploration.
+---

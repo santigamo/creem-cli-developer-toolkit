@@ -14,6 +14,7 @@ It gives you a small, reproducible loop:
 - `scripts/manage-products.sh`: creates a product and optionally pauses/resumes a subscription
 - `scripts/prompts/`: prompts ready to paste into Claude Code during the recording
 - `skill/SKILL.md`: a small Creem operator skill for AI coding tools
+- `docs/recording-validation-runbook.md`: rehearsal checklist that mirrors the recording flow
 
 ## Stack
 
