@@ -1,0 +1,10 @@
+I am using the Creem CLI as an operator tool.
+
+Review the JSON files from product creation/listing and optional subscription pause/resume.
+
+Answer:
+1. What changed?
+2. Which command output matters most?
+3. Is there any risk in the current subscription state?
+4. What should I do next?
+

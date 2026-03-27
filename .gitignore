@@ -1,0 +1,12 @@
+node_modules
+.DS_Store
+.env
+.env.local
+dist
+.turbo
+coverage
+artifacts/*
+!artifacts/.gitkeep
+examples/minimal-integration/data/*.json
+!examples/minimal-integration/data/.gitkeep
+

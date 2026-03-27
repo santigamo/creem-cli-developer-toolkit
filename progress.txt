@@ -1,0 +1,35 @@
+## Codebase Patterns
+- Keep the integration tiny: Bun runtime, Hono routes, and JSON file persistence instead of a database.
+- Root workflow scripts load both `/.env` and `examples/minimal-integration/.env`; any env value with spaces must be quoted because the scripts use shell `source`.
+- Capture reproducible evidence under `artifacts/` before recording; the AI prompts are designed to reason over those saved JSON files, not live terminal scrollback.
+
+## [2026-03-27 15:51] - BOUNTY-MINIMAL-INTEGRATION
+- Implemented a runnable Bun + TypeScript + Hono minimal integration with checkout creation, success capture, webhook ingestion, and local debug state.
+- Added workflow scripts for checkout verification, propagation debugging, and product management, plus prompt files and a small SKILL.md for AI-assisted demos.
+- Added README setup, recording checklist, env examples, and local `.env` wiring using the authenticated Creem test API key plus the existing demo product.
+- Validated locally:
+  - `pnpm typecheck`
+  - server boot with Bun
+  - `GET /`
+  - `GET /api/debug/state`
+  - `GET /success`
+  - real checkout creation via `POST /api/checkout`
+  - `pnpm workflow:checkout`
+  - `pnpm workflow:debug`
+  - `pnpm workflow:manage`
+- Files changed:
+  - `README.md`
+  - `.gitignore`
+  - `.env.example`
+  - `package.json`
+  - `pnpm-workspace.yaml`
+  - `progress.txt`
+  - `scripts/`
+  - `skill/SKILL.md`
+  - `examples/minimal-integration/`
+- **Learnings for future iterations:**
+  - The local app can create real test checkouts using the API key from `~/.creem/config.json`, but full webhook validation still needs a real `CREEM_WEBHOOK_SECRET`.
+  - In CLI `v0.1.3`, `creem products create` requires `--description`; the initial script assumption was wrong.
+  - `creem_io` types do not expose `webhookId` or `webhookEventType` on `onGrantAccess` / `onRevokeAccess`, so the app must synthesize a local event label for those callbacks.
+  - Recording prep is materially safer once each workflow script has been run at least once and its artifacts folder is known in advance.
+---

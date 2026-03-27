@@ -1,0 +1,13 @@
+My app state and Creem may disagree.
+
+Compare these JSON files:
+- artifacts/.../local-debug-state.json
+- artifacts/.../transactions-list.json
+- artifacts/.../subscriptions-list.json
+
+Answer:
+1. Did the payment happen?
+2. Did the webhook likely arrive?
+3. Is this a checkout failure or a propagation issue?
+4. What is the next best CLI command to confirm your hypothesis?
+

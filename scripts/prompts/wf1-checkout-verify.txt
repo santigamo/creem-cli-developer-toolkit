@@ -1,0 +1,14 @@
+I just completed a Creem test checkout from my local Bun + Hono integration.
+
+Please inspect these JSON files:
+- artifacts/.../checkout-response.json
+- artifacts/.../local-debug-state.json
+- artifacts/.../transactions-list.json
+- artifacts/.../subscriptions-list.json
+
+Answer:
+1. Did the checkout complete successfully?
+2. Which transaction and subscription likely correspond to this checkout?
+3. Does my local app state look consistent?
+4. What Creem CLI command should I run next?
+
