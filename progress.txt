@@ -4,6 +4,18 @@
 - Capture reproducible evidence under `artifacts/` before recording; the AI prompts are designed to reason over those saved JSON files, not live terminal scrollback.
 - Use the official `creem` SDK for API calls and keep webhook verification separate with manual HMAC over the raw body; the webhook route does not need the API key.
 - Distributable Claude Code skills must live under `skills/<skill-name>/SKILL.md` with valid frontmatter; `npx skills add . --list` is the quickest local validation.
+- Creem CLI money fields are minor units; amounts like `500 EUR` must be explained as `5.00 EUR`, not `500.00 EUR`.
+
+## [2026-03-27 18:50] - BOUNTY-CREEM-CLI-AMOUNTS
+- Updated the Creem CLI skill to state explicitly that CLI price and transaction amounts are minor units and must be converted before being described to users.
+- Added an explicit `500 EUR -> 5.00 EUR` example so agents do not mirror raw CLI values as full major-unit prices.
+- Files changed:
+  - `progress.txt`
+  - `skills/creem-cli/SKILL.md`
+- **Learnings for future iterations:**
+  - Human-facing summaries should convert raw CLI monetary values immediately; otherwise the assistant can overstate transaction values by 100x.
+  - The safest phrasing is to show both forms when needed: decimal amount plus the raw minor-unit value from the CLI.
+---
 
 ## [2026-03-27 18:12] - BOUNTY-CREEM-CLI-SKILL
 - Replaced the internal Creem operator note with a distributable Claude Code skill under `skills/creem-cli/`, including `SKILL.md` and `agents/openai.yaml`.
@@ -110,4 +122,15 @@
 - **Learnings for future iterations:**
   - Demo acts need to differ by question and role, not just by outcome; otherwise a failure case feels like a repeated happy path.
   - For payment demos, diagnose-only is often more honest than pretending an infra issue was fixed if the missed webhook was never replayed.
+---
+## [2026-03-27 18:46] - BOUNTY-RUNBOOK-PROPAGATION
+- Refocused Act 2 of the recording runbook on subscription status propagation instead of a second checkout flow.
+- Changed the failure to a missed subscription pause webhook on the subscription created in Act 1, which makes the diagnosis flow visibly different on camera.
+- Updated Act 3 to resume that same subscription after the tunnel is restored, then proceed with product creation and store summary.
+- Files changed:
+  - `docs/recording-validation-runbook.md`
+  - `progress.txt`
+- **Learnings for future iterations:**
+  - A stronger demo failure changes domain, not just outcome; subscription-state propagation reads differently from checkout verification even if both rely on webhooks.
+  - Reusing the Act 1 subscription creates continuity and avoids a second purchase flow that feels repetitive on camera.
 ---
