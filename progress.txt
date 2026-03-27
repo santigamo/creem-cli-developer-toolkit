@@ -65,3 +65,11 @@
   - Recording prep should be treated as a first-class artifact; the best demo flows are the ones already rehearsed against real outputs.
   - The validation pass should be nearly identical to the recording pass so the video is an execution of a known-good path, not a live exploration.
 ---
+## [2026-03-27 16:08] - BOUNTY-TUNNEL-COMMAND
+- Updated the recording runbook to include the exact ngrok command and to clarify that the tunnel must forward to local port 3000.
+- Files changed:
+  - `docs/recording-validation-runbook.md`
+  - `progress.txt`
+- **Learnings for future iterations:**
+  - The tunnel target should be documented explicitly; the public ngrok URL is stable, but it still needs to forward to the app port rather than default HTTP port 80.
+---

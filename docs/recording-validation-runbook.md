@@ -70,12 +70,18 @@ Expected:
 Run your preferred tunnel, for example:
 
 ```bash
-ngrok http 3000
+ngrok http --url=chigger-crisp-tightly.ngrok-free.app 3000
 ```
 
 Expected:
 
 - you get a stable public HTTPS URL
+
+Important:
+
+- the tunnel must point to port `3000`
+- do not point it to port `80`
+- the local Bun + Hono app listens on `http://localhost:3000`
 
 ### 5. Confirm webhook registration
 
