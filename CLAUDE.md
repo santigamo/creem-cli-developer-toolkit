@@ -53,3 +53,4 @@ Two `.env` files: root and `examples/minimal-integration/.env` (for the app). Ke
 - Creem CLI money fields are **minor units** (500 = 5.00 EUR, not 500.00). Always convert before displaying to users.
 - Always use `--json` flag when operating the Creem CLI programmatically.
 - The skill at `skills/creem-cli/SKILL.md` must have valid frontmatter; validate with `npx skills add . --list`.
+- When creating checkouts, use `http://localhost:3000/success` as the success URL (local dev, no TLS).

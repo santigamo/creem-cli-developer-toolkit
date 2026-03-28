@@ -32,13 +32,15 @@ async function ensureDataFiles(): Promise<void> {
   await mkdir(dataDir, { recursive: true });
 
   try {
-    await readFile(appStatePath, "utf8");
+    const content = await readFile(appStatePath, "utf8");
+    JSON.parse(content);
   } catch {
     await writeFile(appStatePath, `${JSON.stringify(createInitialState(), null, 2)}\n`, "utf8");
   }
 
   try {
-    await readFile(webhookEventsPath, "utf8");
+    const content = await readFile(webhookEventsPath, "utf8");
+    JSON.parse(content);
   } catch {
     await writeFile(webhookEventsPath, "[]\n", "utf8");
   }

@@ -2,8 +2,8 @@
   "version": 1,
   "skills": {
     "creem-cli": {
-      "source": "/Users/santi/Code/creem-cli-developer-toolkit",
-      "sourceType": "local",
+      "source": "santigamo/creem-cli-developer-toolkit",
+      "sourceType": "github",
       "computedHash": "871b86f5aecdd95b4c89f283773957d5bc9ec8b0b03467284013752920bdf665"
     }
   }
