@@ -4,7 +4,7 @@ A minimal integration showing how to use the Creem CLI as a developer power tool
 
 `CLI command → checkout URL → local app webhook/state → AI explanation over --json`
 
-📖 **[Written guide](GUIDE.md)** · 🎥 **[Video walkthrough](#)** _(link TBD)_
+📖 **[Written guide](https://dev.to/santigamo/using-the-creem-cli-as-a-developer-power-tool-with-claude-code-2861)** · 🎥 **[Video walkthrough](#)** _(link TBD)_
 
 ## What is included
 
