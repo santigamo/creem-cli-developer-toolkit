@@ -38,6 +38,7 @@ creem whoami --json
 - For cancellations, recommend `--mode scheduled` unless the user explicitly wants immediate access removal.
 - Treat CLI money amounts as minor units, not major units. For EUR and USD, `500` means `5.00`, not `500.00`.
 - When summarizing prices or transactions for humans, convert minor units into a decimal amount with currency. Do not repeat raw CLI numbers as if they were full euros or dollars.
+- For `--success-url`, use `http://` (not `https://`) when pointing to localhost. Local dev servers don't serve TLS, so `https://localhost` causes `ERR_SSL_PROTOCOL_ERROR`.
 
 ## Money Amounts
 
@@ -73,7 +74,7 @@ paid transaction for 5.00 EUR (CLI raw amount: 500 minor units)
 | Get customer by ID | `creem customers get cust_XXXXX --json` |
 | Get customer by email | `creem customers get --email user@example.com --json` |
 | Billing portal link | `creem customers billing cust_XXXXX --json` |
-| Create checkout | `creem checkouts create --product prod_XXXXX --success-url https://app.com/welcome --json` |
+| Create checkout | `creem checkouts create --product prod_XXXXX --success-url http://localhost:3000/success --json` |
 | Get checkout | `creem checkouts get chk_XXXXX --json` |
 | List subscriptions | `creem subscriptions list --json` |
 | Filter subscriptions | `creem subscriptions list --status active --json` |
@@ -90,7 +91,7 @@ paid transaction for 5.00 EUR (CLI raw amount: 500 minor units)
 
 ```bash
 creem whoami --json
-creem checkouts create --product prod_XXXXX --success-url https://app.com/welcome --json
+creem checkouts create --product prod_XXXXX --success-url http://localhost:3000/success --json
 creem transactions list --limit 10 --json
 creem subscriptions list --limit 10 --json
 ```

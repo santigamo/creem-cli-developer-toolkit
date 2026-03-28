@@ -187,11 +187,15 @@ export function registerHomeRoute(app: Hono): void {
       }
 
       /* Event table */
+      .table-wrap {
+        overflow-x: auto;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
         font-size: 13px;
         font-family: "SF Mono", "JetBrains Mono", monospace;
+        table-layout: fixed;
       }
       th {
         text-align: left;
@@ -201,9 +205,16 @@ export function registerHomeRoute(app: Hono): void {
         font-size: 14px;
         color: var(--muted);
       }
+      th:nth-child(1) { width: 35%; }
+      th:nth-child(2) { width: 30%; }
+      th:nth-child(3) { width: 18%; }
+      th:nth-child(4) { width: 17%; }
       td {
         padding: 6px 8px;
         border-bottom: 1px solid var(--border);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .empty-row td {
         color: var(--muted);
@@ -237,6 +248,7 @@ export function registerHomeRoute(app: Hono): void {
       <div class="grid">
         <section class="panel">
           <h2>Recent Webhook Events</h2>
+          <div class="table-wrap">
           <table>
             <thead>
               <tr><th>Event</th><th>Subscription</th><th>Status</th><th>When</th></tr>
@@ -245,6 +257,7 @@ export function registerHomeRoute(app: Hono): void {
               ${lastEventRows || '<tr class="empty-row"><td colspan="4">No webhook events received yet.</td></tr>'}
             </tbody>
           </table>
+          </div>
         </section>
         <section class="panel">
           <h2>Runtime Config</h2>
