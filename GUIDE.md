@@ -82,7 +82,7 @@ Here's how it looks with the CLI:
 
 **You:** "Pause the subscription from my last test purchase, then compare what Creem says with what my app says. I want to know if subscription changes are propagating correctly."
 
-Claude Code runs the pause command, then gathers evidence from both sides: `creem subscriptions get <id> --json` for the Creem state, and `curl localhost:3000/api/debug/state` for the app state. It compares them and reports the finding.
+Claude Code runs the pause command, then gathers evidence from both sides: `creem subscriptions get <id> --json` and `creem transactions list --json` for the Creem state, and `curl localhost:3000/api/debug/state` for the app state. It compares them and reports the finding.
 
 In my test, the result was clear: Creem shows the subscription as paused, but the app still says "Access Granted." The status badge on the home page is still green. The webhook never arrived.
 

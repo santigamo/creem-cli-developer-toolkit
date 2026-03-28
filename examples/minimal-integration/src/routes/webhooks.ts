@@ -103,6 +103,7 @@ function createWebhookRecord(
     subscriptionId:
       getNestedString(payload, ["subscription", "id"]) ??
       getString(payload, "subscription_id") ??
+      getString(payload, "id") ??
       null,
     transactionId:
       getNestedString(payload, ["subscription", "lastTransactionId"]) ??
