@@ -138,22 +138,16 @@ Make sure you have validated one real webhook delivery end to end before relying
 
 ## Skill installation
 
-Validate that the repo exposes a discoverable skill:
+Install the Creem CLI skill:
 
 ```bash
-npx skills add . --list
+npx skills add santigamo/creem-cli-developer-toolkit
 ```
 
-Install locally from this checkout:
+Verify it was added:
 
 ```bash
-npx skills add .
-```
-
-Install from GitHub after publishing:
-
-```bash
-npx skills add <owner>/<repo>
+npx skills add santigamo/creem-cli-developer-toolkit --list
 ```
 
 The canonical skill lives at `skills/creem-cli/SKILL.md`.
