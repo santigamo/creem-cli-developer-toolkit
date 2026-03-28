@@ -4,11 +4,9 @@
   "type": "module",
   "packageManager": "pnpm@10.29.2",
   "scripts": {
-    "dev:integration": "cd examples/minimal-integration && ~/.bun/bin/bun run --hot src/index.ts",
-    "typecheck": "pnpm --dir examples/minimal-integration exec tsc --noEmit",
-    "workflow:checkout": "bash ./scripts/verify-checkout.sh",
-    "workflow:debug": "bash ./scripts/debug-propagation.sh",
-    "workflow:manage": "bash ./scripts/manage-products.sh"
+    "dev": "cd examples/minimal-integration && bun run --hot src/index.ts",
+    "start": "cd examples/minimal-integration && bun run src/index.ts",
+    "typecheck": "pnpm --dir examples/minimal-integration exec tsc --noEmit"
   }
 }
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Creem CLI"
+  short_description: "Operate Creem safely from the terminal"
+  default_prompt: "Use $creem-cli to manage Creem resources from the terminal with real CLI commands, JSON output, and safe defaults."

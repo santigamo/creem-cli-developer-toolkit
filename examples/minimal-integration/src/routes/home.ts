@@ -12,12 +12,60 @@ function escapeHtml(input: string): string {
     .replaceAll("'", "&#39;");
 }
 
+interface StatusStyle {
+  color: string;
+  bg: string;
+  label: string;
+}
+
+function statusStyle(status: string): StatusStyle {
+  switch (status) {
+    case "granted":
+      return { color: "#1a7f37", bg: "#dafbe1", label: "Access Granted" };
+    case "revoked":
+      return { color: "#cf222e", bg: "#ffebe9", label: "Access Revoked" };
+    case "checkout-completed":
+      return { color: "#9a6700", bg: "#fff8c5", label: "Checkout Completed" };
+    case "checkout-created":
+      return { color: "#9a6700", bg: "#fff8c5", label: "Checkout Created" };
+    default:
+      return { color: "#656d76", bg: "#f6f8fa", label: "No Activity" };
+  }
+}
+
+function timeAgo(iso: string): string {
+  const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
 export function registerHomeRoute(app: Hono): void {
   app.get("/", async (c) => {
     const config = getRuntimeConfig();
     const snapshot = await getDebugSnapshot();
+    const { state, recentWebhookEvents } = snapshot;
+    const style = statusStyle(state.localAccessStatus);
     const configJson = escapeHtml(JSON.stringify(summarizeConfig(config), null, 2));
-    const stateJson = escapeHtml(JSON.stringify(snapshot.state, null, 2));
+
+    const subscriptionId =
+      state.lastWebhook?.subscriptionId ?? state.lastSuccess?.params?.subscription_id ?? null;
+
+    const lastEventRows = recentWebhookEvents
+      .slice(0, 5)
+      .map(
+        (e) =>
+          `<tr>
+            <td><code>${escapeHtml(e.eventName)}</code></td>
+            <td>${e.subscriptionId ? `<code>${escapeHtml(e.subscriptionId)}</code>` : "—"}</td>
+            <td>${e.status ? escapeHtml(e.status) : "—"}</td>
+            <td>${timeAgo(e.seenAt)}</td>
+          </tr>`,
+      )
+      .join("");
 
     return c.html(`<!doctype html>
 <html lang="en">
@@ -56,6 +104,43 @@ export function registerHomeRoute(app: Hono): void {
         color: var(--muted);
         line-height: 1.6;
       }
+
+      /* Status badge */
+      .status-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px 24px;
+        border-radius: 18px;
+        margin: 24px 0;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        box-shadow: 0 18px 48px rgba(31, 27, 22, 0.06);
+      }
+      .status-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .status-label {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .status-meta {
+        margin-left: auto;
+        text-align: right;
+        font-size: 13px;
+        color: var(--muted);
+        font-family: "SF Mono", "JetBrains Mono", monospace;
+      }
+      .status-meta code {
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      /* Grid and panels */
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -100,39 +185,74 @@ export function registerHomeRoute(app: Hono): void {
       code {
         font-family: "SF Mono", "JetBrains Mono", monospace;
       }
+
+      /* Event table */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        font-family: "SF Mono", "JetBrains Mono", monospace;
+      }
+      th {
+        text-align: left;
+        padding: 6px 8px;
+        border-bottom: 2px solid var(--border);
+        font-family: "Iowan Old Style", "Palatino Linotype", serif;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      td {
+        padding: 6px 8px;
+        border-bottom: 1px solid var(--border);
+      }
+      .empty-row td {
+        color: var(--muted);
+        font-style: italic;
+        font-family: "Iowan Old Style", "Palatino Linotype", serif;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>Creem Minimal Integration</h1>
       <p>
-        A tiny Bun + Hono app for the Creem CLI bounty. It creates checkout sessions,
-        records webhook deliveries, and exposes local state so the CLI can act as source of truth.
+        A tiny Bun + Hono app that creates checkout sessions,
+        records webhook deliveries, and exposes local state for CLI comparison.
       </p>
-      <div class="cta-row">
-        <a href="/api/debug/state">Open debug JSON</a>
-        <a class="secondary" href="/success">Open success page</a>
+
+      <div class="status-card">
+        <div class="status-dot" style="background: ${style.color}"></div>
+        <span class="status-label" style="color: ${style.color}">${style.label}</span>
+        <div class="status-meta">
+          ${subscriptionId ? `<code>${escapeHtml(subscriptionId)}</code>` : ""}
+          <span>Updated ${timeAgo(state.lastUpdatedAt)}</span>
+        </div>
       </div>
+
+      <div class="cta-row">
+        <a href="/api/debug/state">Debug JSON</a>
+        <a class="secondary" href="/success">Success page</a>
+      </div>
+
       <div class="grid">
         <section class="panel">
-          <h2>Local Actions</h2>
-          <p>Use the terminal or a simple curl request to create a checkout:</p>
-          <pre><code>curl -X POST ${escapeHtml(
-            `${config.appUrl}/api/checkout`,
-          )} -H 'content-type: application/json' -d '{}'</code></pre>
+          <h2>Recent Webhook Events</h2>
+          <table>
+            <thead>
+              <tr><th>Event</th><th>Subscription</th><th>Status</th><th>When</th></tr>
+            </thead>
+            <tbody>
+              ${lastEventRows || '<tr class="empty-row"><td colspan="4">No webhook events received yet.</td></tr>'}
+            </tbody>
+          </table>
         </section>
         <section class="panel">
           <h2>Runtime Config</h2>
           <pre><code>${configJson}</code></pre>
         </section>
       </div>
-      <section class="panel">
-        <h2>Current Local State</h2>
-        <pre><code>${stateJson}</code></pre>
-      </section>
     </main>
   </body>
 </html>`);
   });
 }
-

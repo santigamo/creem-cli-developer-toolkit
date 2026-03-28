@@ -5,8 +5,10 @@ node_modules
 dist
 .turbo
 coverage
-artifacts/*
-!artifacts/.gitkeep
+.vscode/
+.agents/
+.claude/
+
 examples/minimal-integration/data/*.json
 !examples/minimal-integration/data/.gitkeep
 

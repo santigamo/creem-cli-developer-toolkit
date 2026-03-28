@@ -1,20 +1,15 @@
 # Creem CLI Developer Toolkit
 
-This repo is the minimal integration project for the `CREEM CLI as a Developer Power Tool` bounty.
+A minimal integration project showing how to use the Creem CLI as a developer power tool alongside an AI coding assistant.
 
 It gives you a small, reproducible loop:
 
-`Claude Code prompt -> Creem CLI -> checkout URL -> local app webhook/state -> AI explanation over --json`
+`CLI command → checkout URL → local app webhook/state → AI explanation over --json`
 
 ## What is included
 
 - `examples/minimal-integration`: Bun + TypeScript + Hono app
-- `scripts/verify-checkout.sh`: support script for capturing checkout verification evidence
-- `scripts/debug-propagation.sh`: support script for capturing local state plus Creem transactions/subscriptions
-- `scripts/manage-products.sh`: support script for product creation and optional pause/resume
-- `scripts/prompts/`: prompts ready to paste into Claude Code during the recording
-- `skill/SKILL.md`: a small Creem operator skill for AI coding tools
-- `docs/recording-validation-runbook.md`: rehearsal checklist that mirrors the recording flow
+- `skills/creem-cli/`: a Claude Code skill for operating the Creem CLI safely
 
 ## Stack
 
@@ -65,8 +60,8 @@ PUBLIC_WEBHOOK_BASE_URL=https://your-ngrok-url.ngrok-free.app
 Required integration env values:
 
 ```env
-CREEM_API_KEY=creem_test_xxx
-CREEM_WEBHOOK_SECRET=whsec_xxx
+CREEM_API_KEY=***
+CREEM_WEBHOOK_SECRET=***
 CREEM_PRODUCT_ID=prod_xxx
 CREEM_TEST_CUSTOMER_EMAIL=demo+sandbox@example.com
 APP_URL=http://localhost:3000
@@ -78,7 +73,7 @@ CREEM_TEST_MODE=true
 ## Run the app
 
 ```bash
-pnpm dev:integration
+pnpm dev
 ```
 
 Open:
@@ -96,7 +91,7 @@ Your Creem webhook URL should be:
 https://your-public-url/api/webhooks/creem
 ```
 
-Before recording, make sure you have validated one real webhook delivery end to end.
+Make sure you have validated one real webhook delivery end to end before relying on it.
 
 ## Local routes
 
@@ -106,63 +101,26 @@ Before recording, make sure you have validated one real webhook delivery end to 
 - `POST /api/webhooks/creem`: receives and validates Creem webhooks
 - `GET /api/debug/state`: returns local app state plus recent webhook events
 
-## Primary demo approach
+## Workflows
 
-The intended demo is:
+### Checkout and verify
 
-1. you talk to Claude Code in natural language
-2. Claude Code uses the Creem CLI
-3. Claude Code parses `--json`
-4. the local app provides `/success`, `/api/webhooks/creem`, and `/api/debug/state`
+- Create a checkout: `creem checkouts create --product <id> --success-url http://localhost:3000/success --json`
+- Open the returned checkout URL and complete the purchase
+- Verify: `creem transactions list --json` and `creem subscriptions list --json`
 
-The scripts in this repo are support material for reproducibility. They are not meant to be the stars of the video.
+### Debug state propagation
 
-## Workflow 1: checkout and verify
+- Compare local app state (`curl http://localhost:3000/api/debug/state`) with Creem state (`creem transactions list --json`, `creem subscriptions list --json`)
+- Identify whether the app and Creem agree
 
-Primary demo flow:
+### Manage products and subscriptions
 
-- ask Claude Code to create a checkout with:
-  - `creem checkouts create --product <id> --success-url http://localhost:3000/success --json`
-- open the returned checkout URL
-- complete the purchase
-- ask Claude Code to verify the purchase with:
-  - `creem transactions list --json`
-  - `creem subscriptions list --json`
-
-Support path:
-
-- `pnpm workflow:checkout`
-
-## Workflow 2: debug state propagation
-
-Primary demo flow:
-
-- ask Claude Code to compare:
-  - `curl http://localhost:3000/api/debug/state`
-  - `creem transactions list --json`
-  - `creem subscriptions list --json`
-- let Claude Code explain whether app state and Creem state match
-
-Support path:
-
-- `pnpm workflow:debug`
-
-## Workflow 3: manage products from terminal
-
-Primary demo flow:
-
-- ask Claude Code to create a recurring product
-- ask Claude Code to list products
-- ask Claude Code to pause a safe test subscription
-- ask Claude Code to resume it
-
-Support path:
-
-- `pnpm workflow:manage -- sub_xxx`
+- Create a recurring product from the CLI
+- List products
+- Pause and resume a test subscription
 
 ## What has been validated locally
-
-These parts have already been smoke-tested in this repo:
 
 - the Bun server starts
 - `GET /` renders
@@ -174,41 +132,34 @@ These parts have already been smoke-tested in this repo:
 
 ## What still requires your real Creem credentials
 
-These parts are wired but cannot be fully validated without your Creem test account:
-
-- real checkout creation
-- real checkout completion
+- real checkout creation and completion
 - webhook signature verification against a real secret
 - CLI verification against live test transactions/subscriptions
 
-## Recording checklist
+## Skill installation
 
-Before recording:
+Validate that the repo exposes a discoverable skill:
 
-1. Confirm Claude Code can use the Creem CLI via the official skill
-2. Confirm the product id in `.env`
-3. Start the Bun app
-4. Start the tunnel
-5. Confirm one real webhook hit `/api/webhooks/creem`
-6. Rehearse the conversational prompts in Claude Code once
-7. Pick a safe subscription id for pause/resume
-8. Keep scripts and prompts as fallback/reference, not as the main act
+```bash
+npx skills add . --list
+```
+
+Install locally from this checkout:
+
+```bash
+npx skills add .
+```
+
+Install from GitHub after publishing:
+
+```bash
+npx skills add <owner>/<repo>
+```
+
+The canonical skill lives at `skills/creem-cli/SKILL.md`.
 
 ## Quality checks
-
-Run:
 
 ```bash
 pnpm typecheck
 ```
-
-## Suggested demo loop
-
-1. Show the local app briefly
-2. Show Claude Code with the official Creem skill loaded
-3. Ask Claude Code to create a checkout
-4. Complete the sandbox purchase
-5. Ask Claude Code to verify the transaction and subscription
-6. Ask Claude Code to compare app state with Creem state
-7. Ask Claude Code to create a product and pause/resume a subscription
-8. Show the repo support material briefly
