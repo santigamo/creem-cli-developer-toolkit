@@ -1,22 +1,14 @@
 # Using the Creem CLI as a Developer Power Tool with Claude Code
 
-If you build with Creem, you know the loop: write some code, open the dashboard, check if the checkout went through, look at the webhook logs, compare with your local state, go back to the code. Repeat.
+If you build with Creem, you know the loop: write some code, open the dashboard, check if the checkout went through, check the webhook logs, compare with your local state, go back to the code. Four tabs, three data formats, five minutes just to confirm a test purchase landed. Repeat for every change.
 
-It works, but it's slow. And the more your integration grows — subscriptions, status changes, multiple products — the more time you spend switching between tabs instead of building.
-
-This guide shows a different approach. Instead of going to the dashboard, you stay in the terminal. Instead of reading JSON yourself, you let an AI coding assistant do it. The Creem CLI provides the data, Claude Code interprets it, and your app shows the result. Everything in one place.
+This guide shows a different approach. You stay in the terminal. The Creem CLI provides the data, Claude Code interprets it, and your app shows the result. Everything in one place.
 
 I built a small integration to demonstrate this. The repo includes a minimal Bun + Hono app that handles checkouts and webhooks, plus a Claude Code skill that teaches the AI how to operate the Creem CLI safely. The entire workflow — verify, debug, operate — happens from the terminal.
 
 ## The setup
 
-The integration is intentionally small. A Bun server running Hono with five routes:
-
-- `GET /` — a status page that shows the current state of your app at a glance, including a color-coded badge (green for access granted, red for revoked, yellow for in-progress, gray for no activity)
-- `POST /api/checkout` — creates a checkout session via the Creem SDK
-- `GET /success` — captures the redirect parameters after a successful purchase
-- `POST /api/webhooks/creem` — receives and verifies webhook events from Creem using HMAC SHA-256
-- `GET /api/debug/state` — returns the full local state as JSON, useful for programmatic comparison
+The integration is intentionally small. A Bun server running Hono that creates checkout sessions, receives and verifies webhook events from Creem using HMAC SHA-256, and persists local state to JSON files. The home page shows a color-coded status badge — green for access granted, red for revoked, yellow for in-progress, gray for no activity — so you can see the current state at a glance without reading JSON.
 
 The app tracks a simple state machine: `unknown → checkout-created → checkout-completed → granted → revoked`. Every transition is driven by a webhook event. If the webhook doesn't arrive, the state doesn't change. This becomes important later.
 
@@ -68,7 +60,7 @@ Claude Code runs `creem subscriptions get <id> --json` and confirms: active, ren
 
 Claude Code hits `curl localhost:3000/api/debug/state`, compares the local access status with what the Creem API returned, and confirms they match. The app's status badge shows green: "Access Granted."
 
-The entire verification took less than two minutes. One conversation, zero dashboard tabs. And because Claude Code explains the results in plain English, you don't have to parse any JSON yourself.
+One conversation, zero dashboard tabs. Claude Code explains the results in plain English, so you don't have to parse any JSON yourself.
 
 ## Workflow 2: Diagnose a state mismatch
 
@@ -76,7 +68,7 @@ Verifying the happy path is useful, but the real value shows up when something b
 
 This happens more often than you'd think. A subscription gets paused or canceled on the Creem side, but the webhook doesn't land — maybe your endpoint was down, maybe there was a network hiccup, maybe your tunnel dropped. Your app keeps showing "Access Granted" while the subscription is actually paused. Your user has access they shouldn't have, or worse, they lost access and your app doesn't know.
 
-Finding this kind of mismatch by hand means opening the Creem dashboard, finding the subscription, checking its status, then comparing with your database or local state, then checking your webhook logs to see if the event was ever delivered. That's a 10 to 15 minute investigation, minimum.
+Finding this kind of mismatch by hand means opening the Creem dashboard, finding the subscription, checking its status, then comparing with your database or local state, then checking your webhook logs to see if the event was ever delivered.
 
 Here's how it looks with the CLI:
 
@@ -92,7 +84,7 @@ Claude Code didn't just find the mismatch — it explained why. The subscription
 
 Claude Code suggests concrete steps: restore the webhook endpoint, then either replay the event if the platform supports it, or trigger another state change so the next webhook lands and syncs the state. It adapts the suggestions to what it knows about the setup.
 
-The whole diagnosis took about 30 seconds. The same investigation through dashboards and logs would have taken significantly longer, and with more room for error — especially if you're comparing timestamps across different UIs.
+The same investigation through dashboards and logs — opening the subscription page, cross-referencing with webhook delivery logs, checking your server output — would involve a lot more clicking and context-switching. Here it was one prompt and a clear answer.
 
 ## Workflow 3: Operate the store
 
@@ -120,17 +112,9 @@ Claude Code pulls products and subscriptions, cross-references them, and gives y
 
 ## Why this matters
 
-The pattern here isn't specific to Creem. It's about what happens when a CLI tool produces structured output and an AI assistant knows how to read it.
+The pattern here isn't specific to Creem. It's what happens when a CLI tool produces structured JSON output and an AI assistant knows how to read it. The skill bridges the gap — it teaches the AI the commands, the conventions, and the guardrails. Together, they turn a series of manual dashboard checks into a conversation.
 
-The Creem CLI already returns clean JSON with `--json`. That makes it machine-readable. The skill teaches Claude Code what the commands are, what the output means, and what the conventions are (like minor units). Together, they turn what would be a series of manual dashboard checks into a conversation.
-
-Three things make this particularly effective:
-
-1. **Verification without context-switching.** After integrating a payment flow, you can verify the entire chain — checkout, transaction, subscription, webhook, local state — without leaving the terminal. The AI reads the JSON so you don't have to.
-
-2. **Faster diagnosis.** When your app and your payment provider disagree, the CLI lets you query both sides programmatically and compare. The AI spots the mismatch and explains it. What takes 10–15 minutes in a dashboard takes 30 seconds here.
-
-3. **Store operations from the terminal.** Creating products, managing subscriptions, getting store overviews — these are all things you can do conversationally. No forms, no navigation, no waiting for pages to load.
+If you've ever spent fifteen minutes bouncing between a payment dashboard, your server logs, and a database query just to confirm a webhook landed, this is the alternative. One terminal, one conversation, same answer.
 
 ## Try it yourself
 
